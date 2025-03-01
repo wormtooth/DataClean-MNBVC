@@ -1,6 +1,9 @@
 import gzip
 import json
+from multiprocessing import Queue
 from pathlib import Path
+
+from pydantic import BaseModel
 
 
 class SizeLimitedFileWriter:
@@ -15,7 +18,7 @@ class SizeLimitedFileWriter:
         filename_idx_first=0,
         filename_idx_width=3,
         filename_idx_stride=1,
-        filename_fmt="{}.jsonl", # .jsonl.gz
+        filename_fmt="{}.jsonl",  # .jsonl.gz
         file_size_limit_mb=500
       ):
         # 文件存储相关： 文件夹
@@ -104,3 +107,14 @@ class SizeLimitedFileWriter:
 
     def __del__(self):
         self.close()
+
+
+def writer_worker(writer: SizeLimitedFileWriter, queue: Queue):
+    """用于多进程/线程。"""
+    while True:
+        data = queue.get()
+        if data is None:
+            break
+        if isinstance(data, BaseModel):
+            data = data.model_dump(by_alias=True)
+        writer.writeline(data)

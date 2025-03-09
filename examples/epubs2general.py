@@ -19,8 +19,8 @@ from typing import Dict, Iterator, List, Optional, Tuple, Union
 import ebooklib
 from ebooklib import epub
 
-from formats.general import convert_to_general_corpus
-from utils.writer import SizeLimitedFileWriter, writer_worker
+from mnbvc.formats.general import convert_to_general_corpus
+from mnbvc.utils.writer import SizeLimitedFileWriter, writer_worker
 
 DATA_INPUT_FOLDER = "data/52pojie-2008-2021"
 

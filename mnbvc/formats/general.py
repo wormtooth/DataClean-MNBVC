@@ -7,7 +7,7 @@ from typing import List, Union
 
 from pydantic import BaseModel, Field, computed_field
 
-from utils.simhash import Simhash
+from mnbvc.utils.simhash import Simhash
 
 
 class GeneralParagraph(BaseModel):

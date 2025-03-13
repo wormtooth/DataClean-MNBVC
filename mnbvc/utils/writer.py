@@ -109,7 +109,19 @@ class SizeLimitedFileWriter:
         self.close()
 
 
-def writer_worker(writer: SizeLimitedFileWriter, queue: Queue):
+def writer_worker_for_thread(writer: SizeLimitedFileWriter, queue: Queue):
+    """用于多线程。"""
+    while True:
+        data = queue.get()
+        if data is None:
+            break
+        if isinstance(data, BaseModel):
+            data = data.model_dump(by_alias=True)
+        writer.writeline(data)
+
+
+def writer_worker(writer_kwargs: dict, queue: Queue):
+    writer = SizeLimitedFileWriter(**writer_kwargs)
     """用于多进程/线程。"""
     while True:
         data = queue.get()
@@ -118,3 +130,4 @@ def writer_worker(writer: SizeLimitedFileWriter, queue: Queue):
         if isinstance(data, BaseModel):
             data = data.model_dump(by_alias=True)
         writer.writeline(data)
+    writer.close()

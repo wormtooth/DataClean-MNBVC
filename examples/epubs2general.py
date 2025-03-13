@@ -20,7 +20,7 @@ import ebooklib
 from ebooklib import epub
 
 from mnbvc.formats.general import convert_to_general_corpus
-from mnbvc.utils.writer import SizeLimitedFileWriter, writer_worker
+from mnbvc.utils.writer import SizeLimitedFileWriter, writer_worker_for_thread
 
 DATA_INPUT_FOLDER = "data/52pojie-2008-2021"
 
@@ -217,7 +217,7 @@ def main():
     # 如果需要，则每个线程/进程需要有自己独立的 SizeLimitedFileWriter
     # 而且要保证每个 SizeLimitedFileWriter 写入的文件并不冲突
     writer = SizeLimitedFileWriter(output_folder)
-    writer_thread = Thread(target=writer_worker, args=(writer, queue))
+    writer_thread = Thread(target=writer_worker_for_thread, args=(writer, queue))
 
     # 开始转换
     worker_proc.start()

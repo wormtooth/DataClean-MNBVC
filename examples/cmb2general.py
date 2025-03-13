@@ -7,11 +7,10 @@ import zipfile
 from logging.handlers import QueueHandler, QueueListener
 from multiprocessing import Process, Queue
 from pathlib import Path
-from threading import Thread
 from typing import Union
 
 from mnbvc.formats.general import convert_to_general_corpus
-from mnbvc.utils.writer import SizeLimitedFileWriter, writer_worker
+from mnbvc.utils.writer import writer_worker
 
 
 def get_queued_logger(logger_name: str, log_queue: Queue) -> logging.Logger:
@@ -145,14 +144,16 @@ if __name__ == "__main__":
         proc.start()
         converter_procs.append(proc)
 
-    # 写入线程 - 主进程没用其他任务，所以就用线程了
-    writer = SizeLimitedFileWriter(
-        output_folder=output_folder, filename_fmt="{}.jsonl.gz")
-    writer_thread = Thread(
-        target=writer_worker,
-        args=(writer, corpus_queue)
+    # 写入进程
+    writer_kwargs=dict(
+        output_folder=output_folder,
+        filename_fmt="{}.jsonl"
     )
-    writer_thread.start()
+    writer_proc = Process(
+        target=writer_worker,
+        args=(writer_kwargs, corpus_queue)
+    )
+    writer_proc.start()
 
     # 有序地完成所有进程
     # 首先保证所有 jsonl 文件都已经读取完毕
@@ -166,7 +167,7 @@ if __name__ == "__main__":
 
     # 保证所有数据都已经写入
     corpus_queue.put(None)
-    writer_thread.join()
+    writer_proc.join()
 
     # 停止 log
     listener.enqueue_sentinel()

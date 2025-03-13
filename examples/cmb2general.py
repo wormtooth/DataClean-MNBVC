@@ -114,6 +114,9 @@ if __name__ == "__main__":
     # 修改指向 zip 压缩文件的路径
     path = "data/CMB_FinDataSet_sample.zip"
 
+    # 输出文件夹
+    output_folder = "data/cmb"
+
     # 修改 log 的保存位置
     log_path = "data/cmb_log.txt"
     log_queue = Queue()
@@ -144,7 +147,7 @@ if __name__ == "__main__":
 
     # 写入线程 - 主进程没用其他任务，所以就用线程了
     writer = SizeLimitedFileWriter(
-        output_folder="data/cmb", filename_fmt="{}.jsonl")
+        output_folder=output_folder, filename_fmt="{}.jsonl.gz")
     writer_thread = Thread(
         target=writer_worker,
         args=(writer, corpus_queue)

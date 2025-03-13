@@ -171,3 +171,4 @@ if __name__ == "__main__":
 
     # 停止 log
     listener.enqueue_sentinel()
+    listener._thread.join()

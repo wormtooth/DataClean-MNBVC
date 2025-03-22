@@ -1,4 +1,7 @@
 """清洗招商的金融数据 - 通用语料格式
+
+运行方式：命令行到此文件上一层目录，执行
+PYTHONPATH=. python examples/cmb2general.py
 """
 
 import json

@@ -3,8 +3,6 @@
 
 import json
 import logging
-import zipfile
-from multiprocessing import Process, Queue
 from pathlib import Path
 from typing import Union, Iterator
 
@@ -95,14 +93,14 @@ if __name__ == "__main__":
     # 写入
     writer = SizeLimitedFileWriter(
         output_folder=output_folder,
-        filename_idx_first=0, # 从 0 开始
-        filename_idx_width=6, # 每个数字宽度，比如 0 -> 000000.jsonl
-        filename_idx_stride=1, # 下一个文件的数字增量
-        filename_fmt="{}.jsonl" # 如果想要压缩好的输出可以修改成 "{}.jsonl.gz"
+        filename_idx_first=0,  # 从 0 开始
+        filename_idx_width=6,  # 每个数字宽度，比如 0 -> 000000.jsonl
+        filename_idx_stride=1,  # 下一个文件的数字增量
+        filename_fmt="{}.jsonl"  # 如果想要压缩好的输出可以修改成 "{}.jsonl.gz"
     )
 
     for jsonl_path in input_folder.glob("**/*.jsonl"):
         for corpus in convert_jsonl_to_general_corpus(jsonl_path, logger):
             writer.writeline(corpus.model_dump(by_alias=True))
-    
+
     writer.close()

@@ -7,9 +7,11 @@ PYTHONPATH=. python examples/cmb2general.py
 import json
 import logging
 from pathlib import Path
-from typing import Union, Iterator
+from typing import Iterator, Union
 
-from mnbvc.formats.general import convert_to_general_corpus, GeneralCorpus
+import jsonlines
+
+from mnbvc.formats.general import GeneralCorpus, convert_to_general_corpus
 from mnbvc.utils.writer import SizeLimitedFileWriter
 
 
@@ -34,49 +36,29 @@ def convert_jsonl_to_general_corpus(
     """将 jsonl 转化成通用语料格式。"""
     logger.debug(f"处理文件: {path}")
 
-    with open(path, "r", encoding="UTF-8-SIG", errors="ignore") as fp:
-        text = fp.read().strip()
-    if not text:
-        logger.info(f"文件没有内容: {path}")
-        return None
+    with jsonlines.open(path, "r") as reader:
+        for data in reader:
+            # 获取创建时间
+            create_time = None
+            try:
+                dump = data["meta"]["dump"]
+                year = dump.split("-")[0]
+                create_time = f"{year}0101"
+            except:
+                logger.debug(f"Cannot find create time in {data.get('meta', {})}")
 
-    # 将 \u2028 替换成空格
-    # 不然会导致下面的 text.splitlines() 出问题
-    text = text.replace("\u2028", " ")
-
-    # 每一行是一个json
-    for line in text.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        # 将数据转成dict
-        try:
-            data = json.loads(line)
-        except Exception as e:
-            logger.error(f"无法加载成JSON[{e}]: {line}")
-            continue
-
-        # 获取创建时间
-        create_time = None
-        try:
-            dump = data["meta"]["dump"]
-            year = dump.split("-")[0]
-            create_time = f"{year}0101"
-        except:
-            logger.debug(f"Cannot find create time in {data.get('meta', {})}")
-
-        # 转换成通用语料格式
-        try:
-            corpus = convert_to_general_corpus(
-                text_id=data["meta"].get("title", "").strip(),
-                text=data["text"],
-                create_time=create_time
-            )
-            corpus.extension_fields = json.dumps(data["meta"])
-            yield corpus
-        except Exception as e:
-            logger.error(f"Cannot process [{e}]: {data}")
-            continue
+            # 转换成通用语料格式
+            try:
+                corpus = convert_to_general_corpus(
+                    text_id=data["meta"].get("title", "").strip(),
+                    text=data["text"],
+                    create_time=create_time
+                )
+                corpus.extension_fields = json.dumps(data["meta"])
+                yield corpus
+            except Exception as e:
+                logger.error(f"Cannot process [{e}]: {data}")
+                continue
 
     logger.debug(f"转换结束: {path}")
 

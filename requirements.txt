@@ -1,3 +1,4 @@
-pydantic
-numpy
 ebooklib
+jsonlines
+numpy
+pydantic

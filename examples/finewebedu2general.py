@@ -6,13 +6,19 @@ PYTHONPATH=. python examples/finewebedu2general.py
 
 import json
 import logging
+import uuid
 from pathlib import Path
 from typing import Iterator, Union
 
-import pandas as pd
+import pyarrow.parquet as pq
 
 from mnbvc.formats.general import GeneralCorpus, convert_to_general_corpus
 from mnbvc.utils.writer import SizeLimitedFileWriter
+
+
+def get_uuid() -> str:
+    """获取一个 uuid。"""
+    return uuid.uuid4().hex
 
 
 def get_logger(log_path: str) -> logging.Logger:
@@ -31,30 +37,32 @@ def get_logger(log_path: str) -> logging.Logger:
 
 def convert_parquet_to_general_corpus(
     path: Union[Path, str],
-    logger: logging.Logger
+    logger: logging.Logger,
+    batch_size: int = 65536,
 ) -> Iterator[GeneralCorpus]:
     """将 jsonl 转化成通用语料格式。"""
     logger.debug(f"处理文件: {path}")
 
-    df_data = pd.read_parquet(path)
+    parquet_file = pq.ParquetFile(path)
+    for batch in parquet_file.iter_batches(batch_size=batch_size):
+        df_data = batch.to_pandas()
+        for idx, row in df_data.iterrows():
+            source = row["source"].strip()
+            text = row["text"].strip()
+            text = text.strip()
+            if not text:
+                continue
 
-    for idx, row in df_data.iterrows():
-        source = row["source"].strip()
-        text = row["text"].strip()
-        text = text.strip()
-        if not text:
-            continue
+            # 生成text id - 每次运行都会生成新的id
+            text_id = get_uuid()
 
-        # 生成text id
-        text_id = f"{source}-{idx}"
-
-        # 转换成通用语料格式
-        corpus = convert_to_general_corpus(
-            text_id=text_id,
-            text=text,
-        )
-        corpus.extension_fields = json.dumps({"source": source})
-        yield corpus
+            # 转换成通用语料格式
+            corpus = convert_to_general_corpus(
+                text_id=text_id,
+                text=text,
+            )
+            corpus.extension_fields = json.dumps({"source": source})
+            yield corpus
 
     logger.debug(f"转换结束: {path}")
 
@@ -80,8 +88,9 @@ if __name__ == "__main__":
         filename_fmt="{}.jsonl"  # 如果想要压缩好的输出可以修改成 "{}.jsonl.gz"
     )
 
+    BATCH_SIZE = 65536  # 每次读取的行数 - 根据内存大小调整
     for path in input_folder.glob("**/*.parquet"):
-        for corpus in convert_parquet_to_general_corpus(path, logger):
+        for corpus in convert_parquet_to_general_corpus(path, logger, batch_size=BATCH_SIZE):
             writer.writeline(corpus.model_dump(by_alias=True))
 
     writer.close()

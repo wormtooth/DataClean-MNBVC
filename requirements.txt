@@ -2,3 +2,5 @@ ebooklib
 jsonlines
 numpy
 pydantic
+pyarrow
+fastparquet

@@ -5,7 +5,7 @@
 ## 运行样例
 
 ```bash
-https://github.com/wormtooth/DataClean-MNBVC.git
+git clone https://github.com/wormtooth/DataClean-MNBVC.git
 cd DataClean-MNBVC
 PYTHONPATH=. python examples/cmb2general.py
 ```

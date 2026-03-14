@@ -24,7 +24,7 @@ def read_file(path: Path) -> str:
 
     folder = path.parent.name
     encoding = "GB18030"
-    if folder == "riddle.20230111.1.أصسُ":
+    if folder == "riddle.20230111.1.谜语":
         encoding = "utf-8"
 
     with open(path, "r", encoding=encoding, errors="ignore") as fp:
@@ -58,7 +58,7 @@ def preprocessing_duzhe(text: str) -> tuple[str, dict]:
 
 
 def preprocessing_txtsk(text: str) -> tuple[str, dict]:
-    """预处理 txtsk.20230112.5.شستى"""
+    """预处理 txtsk.20230112.5.小说"""
     header = "欢迎访问:   www.txtsk.com.cn"
     footer = "更多免费txt电子书，欢迎您到www.txtsk.com.cn下载"
 
@@ -78,9 +78,9 @@ def preprocessing_text(folder: str, filename: str, text: str) -> tuple[str, dict
     """预处理 - 根据文件所在的文件夹处理。"""
     if folder == "duzhe.20230111.2.杂志":
         return preprocessing_duzhe(text)
-    if folder == "txtsk.20230112.5.شستى":
+    if folder == "txtsk.20230112.5.小说":
         return preprocessing_txtsk(text)
-    if folder == "riddle.20230111.1.أصسُ":
+    if folder == "riddle.20230111.1.谜语":
         return text, {}
     return None, None
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     logger = get_logger(log_path)
 
     # writer
-    writer = SizeLimitedFileWriter(output_folder)
+    writer = SizeLimitedFileWriter(output_folder, filename_fmt="{}.jsonl.gz")
 
     # 处理 txt 文件
     for path in sorted(input_folder.glob("**/*.txt")):

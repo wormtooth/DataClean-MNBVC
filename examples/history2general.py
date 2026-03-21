@@ -87,6 +87,9 @@ def preprocessing_text(folder: str, filename: str, text: str) -> tuple[str, dict
 
 if __name__ == "__main__":
     # 历史数据文件夹
+    # 解压 20230112.zip，并重命名一下文件夹
+    # riddle.20230111.1.أصسُ  -> riddle.20230111.1.谜语
+    # txtsk.20230112.5.شستى  -> txtsk.20230112.5.小说
     input_folder = Path("data/20230112")
 
     # 结果输出文件夹

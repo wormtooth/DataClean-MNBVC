@@ -101,7 +101,7 @@ if __name__ == "__main__":
     logger = get_logger(log_path)
 
     # writer
-    writer = SizeLimitedFileWriter(output_folder, filename_fmt="{}.jsonl")
+    writer = SizeLimitedFileWriter(output_folder, filename_fmt="{}.jsonl.gz")
 
     # 处理 txt 文件
     for path in sorted(input_folder.glob("**/*.txt")):
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         for key, val in attributes.items():
             setattr(corpus, key, val)
 
-        writer.writeline(corpus.model_dump())
+        writer.writeline(corpus.model_dump(by_alias=True))
 
     # 处理 json
     finance_folder = input_folder / "afqmc.20230111.4.金融"
@@ -168,6 +168,6 @@ if __name__ == "__main__":
                     元数据=meta
                 )
                 corpus.create_time = create_time
-                writer.writeline(corpus.model_dump())
+                writer.writeline(corpus.model_dump(by_alias=True))
 
     writer.close()

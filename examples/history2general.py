@@ -93,7 +93,7 @@ if __name__ == "__main__":
     input_folder = Path("data/20230112")
 
     # 结果输出文件夹
-    output_folder = input_folder / "output2"
+    output_folder = input_folder / "output"
     output_folder.mkdir(exist_ok=True)
 
     # 修改 log 的保存位置

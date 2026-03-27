@@ -3,18 +3,15 @@
 用于处理数据包：20230112
 
 运行方式：命令行到此文件上一层目录，执行
-PYTHONPATH=. python examples/bloomberg2general.py
+PYTHONPATH=. python examples/history2general.py
 """
 
 import json
-import logging
 import re
-import uuid
 from pathlib import Path
+from typing import Union
 
-import chardet
-
-from mnbvc.formats.general import GeneralCorpus, convert_to_general_corpus
+from mnbvc.formats.general import convert_to_general_corpus
 from mnbvc.formats.qa import QACorpus, QAMetaData
 from mnbvc.utils import get_logger
 from mnbvc.utils.writer import SizeLimitedFileWriter
@@ -85,6 +82,37 @@ def preprocessing_text(folder: str, filename: str, text: str) -> tuple[str, dict
     return None, None
 
 
+def get_writer(
+    output_folder: Path,
+    writers: dict[str, SizeLimitedFileWriter],
+    path: Union[Path, str],
+) -> SizeLimitedFileWriter:
+    """根据文件路径返回对应的 writer"""
+
+    keys = [
+        "riddle.20230111.1.谜语",
+        "duzhe.20230111.2.杂志",
+        "github.20230111.3.文章",
+        "afqmc.20230111.4.金融",
+        "txtsk.20230112.5.小说",
+    ]
+    path = str(path)
+
+    found_key = "default"
+    for key in keys:
+        if key in path:
+            found_key = key
+            break
+
+    if found_key not in writers:
+        filename_fmt = found_key + ".{}.jsonl.gz"
+        writer = SizeLimitedFileWriter(
+            output_folder, filename_fmt=filename_fmt)
+        writers[found_key] = writer
+
+    return writers[found_key]
+
+
 if __name__ == "__main__":
     # 历史数据文件夹
     # 解压 20230112.zip，并重命名一下文件夹
@@ -100,13 +128,17 @@ if __name__ == "__main__":
     log_path = "data/20230112/log.txt"
     logger = get_logger(log_path)
 
-    # writer
-    writer = SizeLimitedFileWriter(output_folder, filename_fmt="{}.jsonl.gz")
+    # writers
+    writers = {}
 
     # 处理 txt 文件
     for path in sorted(input_folder.glob("**/*.txt")):
         folder = path.parent.name
         filename = path.name
+        # 跳过根目录的 txt
+        if folder == "20230112":
+            continue
+        writer = get_writer(output_folder, writers, path)
 
         # text_id
         text_id = f"{folder}-{filename}"
@@ -136,7 +168,32 @@ if __name__ == "__main__":
 
         writer.writeline(corpus.model_dump(by_alias=True))
 
-    # 处理 json
+    # 处理：github.20230111.3.文章
+    article_folder = input_folder / "github.20230111.3.文章"
+    for path in sorted(article_folder.glob("**/*.json")):
+        writer = get_writer(output_folder, writers, path)
+        with open(path, "r") as fp:
+            for line in fp:
+                line = line.strip()
+                if not line:
+                    continue
+                data: dict = json.loads(line)
+                content = data.get("content", "").strip()
+                if not content:
+                    content
+                title = data.get("title", "微信文章")
+                account = data.get("account", "微信账号")
+                data.pop("content", None)
+
+                corpus = convert_to_general_corpus(
+                    text_id=f"{account}-{title}",
+                    text=content,
+                    create_time="20230111"
+                )
+                corpus.extension_fields = json.dumps(data, ensure_ascii=False)
+                writer.writeline(corpus.model_dump(by_alias=True))
+
+    # 处理：afqmc.20230111.4.金融
     finance_folder = input_folder / "afqmc.20230111.4.金融"
     qa_template = """
 以下两个关于花呗的句子意思是否相同？
@@ -170,4 +227,6 @@ if __name__ == "__main__":
                 corpus.create_time = create_time
                 writer.writeline(corpus.model_dump(by_alias=True))
 
-    writer.close()
+    # 关闭所有writers
+    for writer in writers.values():
+        writer.close()

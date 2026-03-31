@@ -175,7 +175,7 @@ class Simhash(object):
 
     @staticmethod
     def _bitarray_from_bytes(b):
-        return np.unpackbits(np.frombuffer(b, dtype='>B'))
+        return np.unpackbits(np.frombuffer(b, dtype='>B')).astype(np.int32)
 
     def distance(self, another):
         assert self.f == another.f

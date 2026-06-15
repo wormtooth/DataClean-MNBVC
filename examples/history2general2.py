@@ -101,13 +101,17 @@ def process_subfolder(
         filename_fmt=filename_fmt,
     )
     subfolder_path = input_folder / subfolder
-    for data in process_func(subfolder_path, logger):
-        writer.writeline(data)
+    try:
+        for data in process_func(subfolder_path, logger):
+            writer.writeline(data)
+    except Exception as e:
+        logger.warning(f"Error processing {subfolder_path}: {e}")
     writer.close()
 
 
 def process_article1(folder: Path, logger: logging.Logger) -> Iterable[dict]:
     """github.20230115.1.论文"""
+    logger.info("github.20230115.1.论文")
     for json_path in folder.glob("**/*.json"):
         with open(json_path, "r") as fp:
             data = json.load(fp)
@@ -128,6 +132,8 @@ def process_article1(folder: Path, logger: logging.Logger) -> Iterable[dict]:
 
 def process_news3(folder: Path, logger: logging.Logger) -> Iterable[dict]:
     """github.20230115.3.新闻"""
+
+    logger.info("github.20230115.3.新闻")
 
     def _remove_line_prefix(line):
         prefix_ptn = r"\d+ \|\|\|"
@@ -181,6 +187,8 @@ def process_news3(folder: Path, logger: logging.Logger) -> Iterable[dict]:
 def process_qa4(folder: Path, logger: logging.Logger) -> Iterable[dict]:
     """github.20230115.4.问答"""
 
+    logger.info("github.20230115.4.问答")
+
     def _process_qa(data):
         title = data.get("title", "UNKNOWN")
         context = data.get("context", "")
@@ -231,6 +239,8 @@ def process_qa4(folder: Path, logger: logging.Logger) -> Iterable[dict]:
 def process_qa5_general(folder: Path, logger: logging.Logger) -> Iterable[dict]:
     """github.20230115.5.问答 - 通用语料"""
 
+    logger.info("github.20230115.5.问答 - 通用语料")
+
     for source, meta in folder5_filemeta.items():
         if meta["format"] != "general":
             continue
@@ -260,6 +270,8 @@ def process_qa5_general(folder: Path, logger: logging.Logger) -> Iterable[dict]:
 def process_qa5_code(folder: Path, logger: logging.Logger) -> Iterable[dict]:
     """github.20230115.5.问答 - 代码语料"""
 
+    logger.info("github.20230115.5.问答 - 代码语料")
+
     for source, meta in folder5_filemeta.items():
         if meta["format"] != "code":
             continue
@@ -282,6 +294,8 @@ def process_qa5_code(folder: Path, logger: logging.Logger) -> Iterable[dict]:
 
 def process_qa5_zhihu(folder: Path, logger: logging.Logger) -> Iterable[dict]:
     """github.20230115.5.问答 - 知乎问答语料"""
+
+    logger.info("github.20230115.5.问答 - 知乎问答语料")
 
     def _get_create_time(data):
         time_fields = [
@@ -365,6 +379,8 @@ def process_qa5_zhihu(folder: Path, logger: logging.Logger) -> Iterable[dict]:
 def process_novel6(folder: Path, logger: logging.Logger) -> Iterable[dict]:
     """aliyun.20230115.6.网络小说"""
 
+    logger.info("aliyun.20230115.6.网络小说")
+
     for txt_path in folder.glob("**/*.txt"):
         try:
             raw_text = open_text(txt_path, logger=logger)
@@ -394,12 +410,12 @@ if __name__ == "__main__":
     logger = get_logger(log_path)
 
     process_funcs = [
-        # ["github.20230115.1.论文", process_article1, {}],
-        # ["github.20230115.3.新闻", process_news3, {}],
-        # ["github.20230115.4.问答", process_qa4, {}],
-        # ["aliyun.20230115.6.网络小说", process_novel6, {}],
-        # ["github.20230115.5.问答", process_qa5_general, {"filename_fmt": "github.20230115.5.问答-通用格式-{}.jsonl"}],
-        # ["github.20230115.5.问答", process_qa5_code, {"filename_fmt": "github.20230115.5.问答-代码格式-{}.jsonl"}],
+        ["github.20230115.1.论文", process_article1, {}],
+        ["github.20230115.3.新闻", process_news3, {}],
+        ["github.20230115.4.问答", process_qa4, {}],
+        ["aliyun.20230115.6.网络小说", process_novel6, {}],
+        ["github.20230115.5.问答", process_qa5_general, {"filename_fmt": "github.20230115.5.问答-通用格式-{}.jsonl"}],
+        ["github.20230115.5.问答", process_qa5_code, {"filename_fmt": "github.20230115.5.问答-代码格式-{}.jsonl"}],
         ["github.20230115.5.问答", process_qa5_zhihu, {"filename_fmt": "github.20230115.5.问答-问答格式-{}.jsonl"}],
     ]
 
